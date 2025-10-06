@@ -83,7 +83,7 @@ const History = () => {
         totalGames: games.length,
         completedGames: completedGames.length,
         bestScore: games.length > 0 ? Math.max(...games.map(g => g.score)) : 0,
-        avgScore: completedGames.length > 0 
+        avgScore: completedGames.length > 0
             ? Math.round(completedGames.reduce((sum, g) => sum + g.score, 0) / completedGames.length)
             : 0,
         totalTime: completedGames.reduce((sum, g) => sum + (g.timeElapsed || 0), 0)
@@ -141,10 +141,10 @@ const History = () => {
             <div className="filters-section">
                 <div className="filters-content">
                     <span className="filters-label">Filter by:</span>
-                    
+
                     <div className="filter-group">
                         <span className="filter-label">Status:</span>
-                        <select 
+                        <select
                             className="filter-select"
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
@@ -157,7 +157,7 @@ const History = () => {
 
                     <div className="filter-group">
                         <span className="filter-label">Difficulty:</span>
-                        <select 
+                        <select
                             className="filter-select"
                             value={difficultyFilter}
                             onChange={(e) => setDifficultyFilter(e.target.value)}
@@ -192,7 +192,7 @@ const History = () => {
                         const isAbandoned = game.score === 0;
                         const status = isAbandoned ? 'abandoned' : 'completed';
                         const difficulty = game.difficulty || 'easy';
-                        
+
                         return (
                             <div key={game.id} className="game-item">
                                 <div className="game-item-header">
