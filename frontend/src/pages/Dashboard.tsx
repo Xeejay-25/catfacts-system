@@ -60,11 +60,21 @@ const Dashboard = () => {
                         </div>
                     </div>
                     <div className="header-actions">
-                        <button className="btn btn-primary" onClick={() => navigate('/play')}>
-                            Play Game
+                        <button className="action-card" onClick={() => navigate('/play')}>
+                            <div className="action-icon">🎮</div>
+                            <div className="action-label">Play Game</div>
                         </button>
-                        <button className="btn btn-secondary" onClick={() => navigate('/history')}>
-                            View History
+                        <button className="action-card" onClick={() => navigate('/history')}>
+                            <div className="action-icon">📜</div>
+                            <div className="action-label">View History</div>
+                        </button>
+                        <button className="action-card" onClick={() => navigate('/leaderboards')}>
+                            <div className="action-icon">🏆</div>
+                            <div className="action-label">Leaderboards</div>
+                        </button>
+                        <button className="action-card" onClick={() => navigate('/user/select')}>
+                            <div className="action-icon">🔄</div>
+                            <div className="action-label">Switch User</div>
                         </button>
                     </div>
                 </div>
@@ -92,58 +102,34 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                <div className="dashboard-sections">
-                    <div className="recent-games">
-                        <h2 className="section-title">Recent Games</h2>
-                        {games.length === 0 ? (
-                            <div className="empty-message">
-                                <p>No games played yet. Start playing to see your stats!</p>
-                                <button className="btn btn-primary" onClick={() => navigate('/play')}>
-                                    Play Now
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="games-mini-list">
-                                {games.slice(0, 5).map((game) => (
-                                    <div key={game.id} className="game-mini-card">
-                                        <div className="game-mini-score">
-                                            {game.score}/{game.totalQuestions}
-                                        </div>
-                                        <div className="game-mini-info">
-                                            <span className="game-mini-date">
-                                                {new Date(game.completedAt).toLocaleDateString()}
-                                            </span>
-                                            <span className="game-mini-percentage">
-                                                {Math.round((game.score / game.totalQuestions) * 100)}%
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="quick-actions">
-                        <h2 className="section-title">Quick Actions</h2>
-                        <div className="actions-grid">
-                            <button className="action-card" onClick={() => navigate('/play')}>
-                                <div className="action-icon">🎮</div>
-                                <div className="action-label">Play Game</div>
-                            </button>
-                            <button className="action-card" onClick={() => navigate('/history')}>
-                                <div className="action-icon">📜</div>
-                                <div className="action-label">View History</div>
-                            </button>
-                            <button className="action-card" onClick={() => navigate('/leaderboards')}>
-                                <div className="action-icon">🏆</div>
-                                <div className="action-label">Leaderboards</div>
-                            </button>
-                            <button className="action-card" onClick={() => navigate('/user/select')}>
-                                <div className="action-icon">🔄</div>
-                                <div className="action-label">Switch User</div>
+                <div className="recent-games">
+                    <h2 className="section-title">Recent Games</h2>
+                    {games.length === 0 ? (
+                        <div className="empty-message">
+                            <p>No games played yet. Start playing to see your stats!</p>
+                            <button className="btn btn-primary" onClick={() => navigate('/play')}>
+                                Play Now
                             </button>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="games-mini-list">
+                            {games.slice(0, 5).map((game) => (
+                                <div key={game.id} className="game-mini-card">
+                                    <div className="game-mini-score">
+                                        {game.score}/{game.totalQuestions}
+                                    </div>
+                                    <div className="game-mini-info">
+                                        <span className="game-mini-date">
+                                            {new Date(game.completedAt).toLocaleDateString()}
+                                        </span>
+                                        <span className="game-mini-percentage">
+                                            {Math.round((game.score / game.totalQuestions) * 100)}%
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
