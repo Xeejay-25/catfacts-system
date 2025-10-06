@@ -14,6 +14,10 @@ export interface Game {
     score: number;
     totalQuestions: number;
     completedAt: string;
+    difficulty?: 'easy' | 'medium' | 'hard';
+    timeElapsed?: number;
+    moves?: number;
+    factsCollected?: number;
 }
 
 export interface Question {
