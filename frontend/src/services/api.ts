@@ -146,7 +146,7 @@ export const userAPI = {
 
 // Game API
 export const gameAPI = {
-    getQuestions: async (count: number = 10): Promise<Question[]> => {
+    getQuestions: async (): Promise<Question[]> => {
         // This is not used in the actual game - the Game component has its own logic
         // But keeping for backward compatibility
         return [];
@@ -235,6 +235,42 @@ export const gameAPI = {
 
 // Leaderboard API
 export const leaderboardAPI = {
+    // Get top individual game scores by difficulty
+    getTopGames: async (difficulty: 'easy' | 'medium' | 'hard' = 'easy'): Promise<any[]> => {
+        const response = await fetch(`${API_BASE_URL}/games/top?difficulty=${difficulty}`);
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch top games');
+        }
+
+        const data = await response.json();
+        return data.map((game: any) => ({
+            ...game,
+            timeElapsed: game.time_elapsed || game.timeElapsed,
+            completedAt: game.completed_at || game.completedAt
+        }));
+    },
+
+    // Get top players by overall statistics
+    getTopPlayers: async (): Promise<any[]> => {
+        const response = await fetch(`${API_BASE_URL}/games/players/top`);
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch top players');
+        }
+
+        const data = await response.json();
+        return data.map((player: any) => ({
+            ...player,
+            userId: player.user_id || player.userId,
+            gamesCompleted: player.games_completed || player.gamesCompleted,
+            bestScore: player.best_score || player.bestScore,
+            averageScore: player.average_score || player.averageScore,
+            averageTime: player.average_time || player.averageTime
+        }));
+    },
+
+    // Legacy method - kept for backward compatibility
     getLeaderboard: async (): Promise<LeaderboardEntry[]> => {
         const response = await fetch(`${API_BASE_URL}/games/leaderboard`);
 
