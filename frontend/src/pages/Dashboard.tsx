@@ -49,6 +49,13 @@ const Dashboard = () => {
     return (
         <div className="dashboard-page">
             <div className="container">
+                <button
+                    className="btn btn-secondary back-button"
+                    onClick={() => navigate('/')}
+                    style={{ marginBottom: '1.5rem' }}
+                >
+                    ← Back to Home
+                </button>
                 <div className="dashboard-header">
                     <div className="user-profile">
                         <img src={currentUser.avatar} alt={currentUser.username} className="profile-avatar" />
