@@ -54,6 +54,13 @@ const UserCreate = () => {
     return (
         <div className="user-create-page">
             <div className="container">
+                <button
+                    className="btn btn-secondary back-button"
+                    onClick={() => navigate('/play')}
+                    style={{ marginBottom: '1.5rem' }}
+                >
+                    ← Back
+                </button>
                 <div className="create-card">
                     <h1 className="page-title">Create Account</h1>
                     <p className="page-subtitle">
