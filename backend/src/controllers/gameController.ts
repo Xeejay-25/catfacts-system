@@ -107,7 +107,74 @@ export const getAllGames = async (req: Request, res: Response) => {
 };
 
 /**
- * Get leaderboard (top players by total score and average score)
+ * Get top individual game scores by difficulty
+ */
+export const getTopGames = async (req: Request, res: Response) => {
+    try {
+        const { difficulty = 'easy' } = req.query;
+        console.log('🏆 Fetching top games for difficulty:', difficulty);
+
+        const [rows] = await pool.execute<RowDataPacket[]>(
+            `SELECT 
+                g.id,
+                g.score,
+                g.moves,
+                g.time_elapsed,
+                g.difficulty,
+                g.id as completed_at,
+                u.name as username,
+                CONCAT("https://api.dicebear.com/7.x/avataaars/svg?seed=", u.name) as avatar
+             FROM games g
+             JOIN users u ON g.user_id = u.id
+             WHERE g.difficulty = ?
+             ORDER BY g.score DESC, g.moves ASC, g.time_elapsed ASC
+             LIMIT 10`
+        ,
+            [difficulty]
+        );
+
+        console.log(`✅ Found ${rows.length} top games for ${difficulty}`);
+        res.json(rows);
+    } catch (error) {
+        console.error('❌ Error fetching top games:', error);
+        res.status(500).json({ error: 'Failed to fetch top games' });
+    }
+};
+
+/**
+ * Get top players by overall statistics
+ */
+export const getTopPlayers = async (req: Request, res: Response) => {
+    try {
+        console.log('⭐ Fetching top players...');
+        const [rows] = await pool.execute<RowDataPacket[]>(
+            `SELECT 
+                u.id as user_id,
+                u.name as username,
+                CONCAT("https://api.dicebear.com/7.x/avataaars/svg?seed=", u.name) as avatar,
+                COUNT(g.id) as games_completed,
+                MAX(g.score) as best_score,
+                AVG(g.score) as average_score,
+                AVG(g.time_elapsed) as average_time
+             FROM users u
+             LEFT JOIN games g ON u.id = g.user_id
+             GROUP BY u.id, u.name
+             HAVING games_completed > 0
+             ORDER BY best_score DESC, average_score DESC, games_completed DESC
+             LIMIT 20`
+        );
+
+        console.log(`✅ Top players generated with ${rows.length} players`);
+        res.json(rows);
+    } catch (error) {
+        console.error('❌ Error fetching top players:', error);
+        res.status(500).json({ error: 'Failed to fetch top players' });
+    }
+};
+
+/**
+ * Get leaderboard (legacy - keeping for backward compatibility)
+ * @deprecated Use getTopPlayers instead
  */
 export const getLeaderboard = async (req: Request, res: Response) => {
     try {
