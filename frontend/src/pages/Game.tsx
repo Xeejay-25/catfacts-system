@@ -163,6 +163,9 @@ const Game = () => {
         <div className="game-page">
             {/* Top Right Navigation */}
             <div className="top-nav">
+                <button className="nav-btn nav-btn-secondary" onClick={() => navigate('/dashboard')}>
+                    ← Back
+                </button>
                 <button className="nav-btn nav-btn-gray" onClick={() => navigate('/user/select')}>
                     Switch
                 </button>
