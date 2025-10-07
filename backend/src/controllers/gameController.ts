@@ -129,7 +129,7 @@ export const getTopGames = async (req: Request, res: Response) => {
              WHERE g.difficulty = ?
              ORDER BY g.score DESC, g.moves ASC, g.time_elapsed ASC
              LIMIT 10`
-        ,
+            ,
             [difficulty]
         );
 
