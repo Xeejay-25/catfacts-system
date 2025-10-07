@@ -4,7 +4,9 @@ import {
     getUserGames,
     getAllGames,
     getLeaderboard,
-    getUserStats
+    getUserStats,
+    getTopGames,
+    getTopPlayers
 } from '../controllers/gameController';
 
 const router = express.Router();
@@ -18,7 +20,13 @@ router.get('/user/:userId', getUserGames);
 // GET /api/games/user/:userId/stats - Get user statistics
 router.get('/user/:userId/stats', getUserStats);
 
-// GET /api/games/leaderboard - Get leaderboard
+// GET /api/games/top - Get top individual game scores by difficulty
+router.get('/top', getTopGames);
+
+// GET /api/games/players/top - Get top players by overall statistics
+router.get('/players/top', getTopPlayers);
+
+// GET /api/games/leaderboard - Get leaderboard (legacy)
 router.get('/leaderboard', getLeaderboard);
 
 // GET /api/games - Get all games (optional)
