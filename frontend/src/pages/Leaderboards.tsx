@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { leaderboardAPI, type LeaderboardEntry } from '../services/api';
 import './Leaderboards.css';
 
 const Leaderboards = () => {
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
     const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
 
     useEffect(() => {
         loadLeaderboard();
@@ -42,6 +44,13 @@ const Leaderboards = () => {
     return (
         <div className="leaderboards-page">
             <div className="container">
+                <button
+                    className="btn btn-secondary back-button"
+                    onClick={() => navigate('/')}
+                    style={{ marginBottom: '1.5rem' }}
+                >
+                    ← Back to Home
+                </button>
                 <h1 className="page-title">🏆 Leaderboards</h1>
                 <p className="page-subtitle">
                     Top cat facts experts from around the world
