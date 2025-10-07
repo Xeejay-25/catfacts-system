@@ -38,7 +38,7 @@ const Leaderboards = () => {
     const loadLeaderboards = async () => {
         try {
             setLoading(true);
-            
+
             // Load top games by difficulty
             const gamesData = await leaderboardAPI.getTopGames(selectedDifficulty);
             setTopGames(gamesData);
