@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { gameAPI } from '../services/api';
 import './Game.css';
 
 interface Card {
@@ -67,6 +68,26 @@ const Game = () => {
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
+    const saveGameToBackend = async (finalScore: number, pairs: number) => {
+        if (!currentUser || !currentUser.id) return;
+
+        try {
+            await gameAPI.submitGame(
+                currentUser.id,
+                finalScore,
+                pairs,
+                difficulty,
+                time,
+                moves,
+                unlockedFacts.length
+            );
+            console.log('Game saved successfully!');
+        } catch (error) {
+            console.error('Failed to save game:', error);
+            // Don't show error to user - game completion is more important
+        }
+    };
+
     const initializeGame = useCallback(() => {
         const { pairs } = difficultyConfigs[difficulty];
         const selectedEmojis = CAT_EMOJIS.slice(0, pairs);
@@ -114,7 +135,8 @@ const Game = () => {
                             ? { ...c, isMatched: true }
                             : c
                     ));
-                    setMatchedPairs(matchedPairs + 1);
+                    const newMatchedPairs = matchedPairs + 1;
+                    setMatchedPairs(newMatchedPairs);
                     setScore(score + 100);
 
                     // Unlock a new fact
@@ -124,8 +146,10 @@ const Game = () => {
                     setFlippedCards([]);
 
                     // Check if game is complete
-                    if (matchedPairs + 1 === difficultyConfigs[difficulty].pairs) {
+                    if (newMatchedPairs === difficultyConfigs[difficulty].pairs) {
                         setIsGameActive(false);
+                        // Save game to backend
+                        saveGameToBackend(score + 100, newMatchedPairs);
                     }
                 }, 500);
             } else {
