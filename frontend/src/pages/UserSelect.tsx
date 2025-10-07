@@ -30,20 +30,6 @@ const UserSelect = () => {
         navigate('/dashboard');
     };
 
-    const handleDeleteUser = async (userId: number, e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (!window.confirm('Are you sure you want to delete this user?')) {
-            return;
-        }
-
-        try {
-            await userAPI.deleteUser(userId);
-            setUsers(users.filter(u => u.id !== userId));
-        } catch (err) {
-            setError('Failed to delete user. Please try again.');
-        }
-    };
-
     if (loading) {
         return (
             <div className="user-select-page">
@@ -57,9 +43,16 @@ const UserSelect = () => {
     return (
         <div className="user-select-page">
             <div className="container">
-                <h1 className="page-title">Select User</h1>
+                <button
+                    className="btn btn-secondary back-button"
+                    onClick={() => navigate('/play')}
+                    style={{ marginBottom: '1.5rem' }}
+                >
+                    ← Back
+                </button>
+                <h1 className="page-title">Select Player</h1>
                 <p className="page-subtitle">
-                    Choose your account to continue playing
+                    Choose a player to continue your gaming journey
                 </p>
 
                 {error && (
@@ -90,30 +83,29 @@ const UserSelect = () => {
                                     className="user-card"
                                     onClick={() => handleSelectUser(user)}
                                 >
-                                    <button
-                                        className="delete-btn"
-                                        onClick={(e) => handleDeleteUser(user.id, e)}
-                                        title="Delete user"
-                                    >
-                                        ×
-                                    </button>
                                     <img
                                         src={user.avatar}
                                         alt={user.username}
                                         className="user-avatar"
                                     />
                                     <h3 className="user-name">{user.username}</h3>
-                                    <p className="user-info">
-                                        Joined {new Date(user.createdAt).toLocaleDateString()}
-                                    </p>
+                                    <div className="user-details">
+                                        <div className="user-detail-row">
+                                            <span>Joined:</span>
+                                            <span className="detail-value">
+                                                {new Date(user.createdAt).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="click-hint">Click to select</div>
                                 </div>
                             ))}
                         </div>
 
-                        <div className="create-new">
-                            <p>Don't see your account?</p>
+                        <div className="create-new-section">
+                            <p className="create-new-text">Don't see your account?</p>
                             <button
-                                className="btn btn-secondary"
+                                className="btn btn-secondary btn-sm"
                                 onClick={() => navigate('/user/create')}
                             >
                                 Create New Account

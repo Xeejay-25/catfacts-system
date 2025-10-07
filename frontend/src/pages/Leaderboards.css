@@ -1,244 +1,435 @@
 .leaderboards-page {
-    min-height: 60vh;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #e0c3fc 0%, #a29bfe 50%, #8ec5fc 100%);
+    padding: 24px;
 }
 
-.loading {
+/* Header */
+.leaderboards-header {
+    max-width: 1400px;
+    margin: 0 auto 32px;
+}
+
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    color: #5f3dc4;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 16px;
+}
+
+.back-button:hover {
+    color: #7950f2;
+    transform: translateX(-4px);
+}
+
+.back-icon {
+    font-size: 20px;
+}
+
+.header-content {
     text-align: center;
-    padding: 48px;
-    font-size: 18px;
-    color: var(--text-light);
+    margin-bottom: 0;
 }
 
-.empty-state {
-    text-align: center;
-    padding: 64px 24px;
-    background-color: var(--white);
-    border-radius: 16px;
-    box-shadow: var(--shadow);
+.leaderboards-title {
+    font-size: 36px;
+    font-weight: 700;
+    color: #5f3dc4;
+    margin: 0 0 8px 0;
 }
 
-.empty-icon {
-    font-size: 80px;
-    margin-bottom: 24px;
-}
-
-.empty-state h2 {
-    font-size: 28px;
-    color: var(--primary-color);
-    margin-bottom: 12px;
-}
-
-.empty-state p {
-    font-size: 18px;
-    color: var(--text-light);
+.leaderboards-subtitle {
+    font-size: 16px;
+    color: #7950f2;
     margin: 0;
 }
 
-.leaderboard-table {
-    background-color: var(--white);
-    border-radius: 12px;
-    box-shadow: var(--shadow);
-    overflow: hidden;
-    margin-bottom: 48px;
-}
-
-.table-header {
+/* Two Column Grid */
+.leaderboards-grid {
     display: grid;
-    grid-template-columns: 80px 1fr 100px 120px 120px;
-    gap: 16px;
-    padding: 20px 24px;
-    background-color: var(--primary-color);
-    color: var(--white);
-    font-weight: 600;
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
-.table-body {
+/* Section Cards */
+.leaderboard-section {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.section-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+}
+
+.section-title h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+    margin: 0 0 4px 0;
+}
+
+.section-title p {
+    font-size: 13px;
+    color: #999;
+    margin: 0;
+}
+
+/* Difficulty Filters */
+.difficulty-filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.filter-btn {
+    flex: 1;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    background-color: #f0f0f0;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+    background-color: #e0e0e0;
+}
+
+.filter-btn.active {
+    background-color: #333;
+    color: white;
+}
+
+/* Content Area */
+.leaderboard-content {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.empty-message {
+    text-align: center;
+    padding: 64px 20px;
+    color: #999;
+}
+
+/* Games List */
+.games-list {
     display: flex;
     flex-direction: column;
+    gap: 12px;
 }
 
-.table-row {
-    display: grid;
-    grid-template-columns: 80px 1fr 100px 120px 120px;
-    gap: 16px;
-    padding: 20px 24px;
-    border-bottom: 1px solid var(--border-color);
-    align-items: center;
-    transition: background-color 0.2s ease;
-}
-
-.table-row:hover {
-    background-color: var(--bg-color);
-}
-
-.table-row:last-child {
-    border-bottom: none;
-}
-
-.table-row.top-three {
-    background-color: #fffbf0;
-}
-
-.table-row.top-three:hover {
-    background-color: #fff4dc;
-}
-
-.rank-col {
-    text-align: center;
-}
-
-.rank-badge {
-    font-size: 24px;
-    font-weight: 700;
-}
-
-.player-col {
+.game-entry {
     display: flex;
+    justify-content: space-between;
     align-items: center;
+    padding: 16px;
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+    background-color: #fafafa;
+    transition: all 0.3s ease;
 }
 
-.player-info {
+.game-entry:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.game-entry.top-rank {
+    background: linear-gradient(135deg, #fff9e6 0%, #fff4d6 100%);
+    border-color: #ffd700;
+}
+
+.entry-left {
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
-.player-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    border: 2px solid var(--primary-color);
+.rank-icon {
+    font-size: 24px;
+    width: 32px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.player-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .player-name {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
-    color: var(--text-color);
+    color: #333;
 }
 
-.games-col,
-.score-col,
-.avg-col {
-    text-align: center;
-    font-size: 16px;
-    font-weight: 500;
+.game-date {
+    font-size: 12px;
+    color: #999;
 }
 
-.stats-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 24px;
+.entry-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 
-.stat-card {
-    background-color: var(--white);
-    border-radius: 12px;
-    padding: 32px;
-    text-align: center;
-    box-shadow: var(--shadow);
+.difficulty-badge {
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.badge-easy {
+    background-color: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
+}
+
+.badge-medium {
+    background-color: rgba(241, 196, 15, 0.2);
+    color: #f1c40f;
+}
+
+.badge-hard {
+    background-color: rgba(231, 76, 60, 0.2);
+    color: #e74c3c;
+}
+
+.score-info {
+    text-align: right;
+}
+
+.score-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+}
+
+.score-details {
+    font-size: 11px;
+    color: #999;
+}
+
+/* Players List */
+.players-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.player-entry {
+    padding: 16px;
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+    background-color: #fafafa;
     transition: all 0.3s ease;
 }
 
-.stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
+.player-entry:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.stat-icon {
-    font-size: 48px;
+.player-entry.top-rank {
+    background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+    border-color: #a855f7;
+}
+
+.player-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 16px;
 }
 
-.stat-value {
-    font-size: 36px;
+.player-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.player-name-large {
+    font-size: 16px;
     font-weight: 700;
-    color: var(--primary-color);
-    margin-bottom: 8px;
+    color: #333;
 }
 
-.stat-label {
+.player-right {
+    text-align: right;
+}
+
+.best-score {
+    font-size: 20px;
+    font-weight: 700;
+    color: #a855f7;
+}
+
+.best-score-label {
+    font-size: 11px;
+    color: #999;
+}
+
+.player-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-icon-small {
+    font-size: 18px;
+    margin-bottom: 4px;
+}
+
+.stat-value-small {
     font-size: 14px;
-    color: var(--text-light);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-weight: 600;
+    color: #333;
 }
 
-@media (max-width: 968px) {
+.stat-label-small {
+    font-size: 10px;
+    color: #999;
+}
 
-    .table-header,
-    .table-row {
-        grid-template-columns: 60px 1fr 80px 100px 100px;
-        gap: 12px;
-        padding: 16px;
+/* Loading State */
+.loading {
+    text-align: center;
+    padding: 64px;
+    font-size: 18px;
+    color: #7950f2;
+}
+
+/* Scrollbar Styling */
+.leaderboard-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.leaderboard-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.leaderboard-content::-webkit-scrollbar-thumb {
+    background: #a29bfe;
+    border-radius: 3px;
+}
+
+.leaderboard-content::-webkit-scrollbar-thumb:hover {
+    background: #9b6eff;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .leaderboards-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
     }
 
-    .rank-badge {
-        font-size: 20px;
-    }
-
-    .player-avatar {
-        width: 40px;
-        height: 40px;
-    }
-
-    .player-name {
-        font-size: 14px;
-    }
-
-    .games-col,
-    .score-col,
-    .avg-col {
-        font-size: 14px;
+    .leaderboard-section {
+        padding: 20px;
     }
 }
 
 @media (max-width: 768px) {
-    .table-header {
-        display: none;
+    .leaderboards-page {
+        padding: 16px;
     }
 
-    .table-row {
-        grid-template-columns: 1fr;
-        gap: 12px;
-        padding: 20px;
+    .leaderboards-title {
+        font-size: 28px;
     }
 
-    .rank-col {
-        order: -1;
-        text-align: left;
+    .leaderboards-subtitle {
+        font-size: 14px;
     }
 
-    .player-col {
-        order: 0;
+    .section-header {
+        flex-direction: column;
+        gap: 8px;
     }
 
-    .games-col,
-    .score-col,
-    .avg-col {
-        display: flex;
-        justify-content: space-between;
-        text-align: left;
+    .game-entry,
+    .player-entry {
+        padding: 12px;
     }
 
-    .games-col::before {
-        content: 'Games Played:';
-        font-weight: 600;
+    .entry-right {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
     }
 
-    .score-col::before {
-        content: 'Total Score:';
-        font-weight: 600;
+    .player-stats {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
     }
 
-    .avg-col::before {
-        content: 'Avg Score:';
-        font-weight: 600;
+    .stat-icon-small {
+        font-size: 16px;
     }
 
-    .stats-cards {
-        grid-template-columns: 1fr;
+    .stat-value-small {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .difficulty-filters {
+        flex-direction: column;
+    }
+
+    .filter-btn {
+        width: 100%;
+    }
+
+    .rank-icon {
+        font-size: 20px;
+        width: 28px;
+    }
+
+    .player-name {
+        font-size: 13px;
+    }
+
+    .score-value {
+        font-size: 16px;
+    }
+
+    .player-name-large {
+        font-size: 14px;
+    }
+
+    .best-score {
+        font-size: 18px;
     }
 }
