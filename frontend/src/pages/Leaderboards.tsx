@@ -1,22 +1,34 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { leaderboardAPI, type LeaderboardEntry } from '../services/api';
+import { leaderboardAPI } from '../services/api';
 import './Leaderboards.css';
 
-interface PlayerStats {
-    name: string;
+interface TopGameEntry {
+    id: number;
+    username: string;
+    avatar: string;
+    score: number;
+    moves: number;
+    time_elapsed: number;
+    difficulty: string;
+    completed_at: string;
+}
+
+interface TopPlayerEntry {
     userId: number;
-    completedGames: number;
+    username: string;
+    avatar: string;
+    gamesCompleted: number;
     bestScore: number;
     averageScore: number;
     averageTime: number;
 }
 
 const Leaderboards = () => {
-    const [topGames, setTopGames] = useState<LeaderboardEntry[]>([]);
-    const [topPlayers, setTopPlayers] = useState<PlayerStats[]>([]);
+    const [topGames, setTopGames] = useState<TopGameEntry[]>([]);
+    const [topPlayers, setTopPlayers] = useState<TopPlayerEntry[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedDifficulty, setSelectedDifficulty] = useState<string>('easy');
+    const [selectedDifficulty, setSelectedDifficulty] = useState<'easy' | 'medium' | 'hard'>('easy');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -26,34 +38,14 @@ const Leaderboards = () => {
     const loadLeaderboards = async () => {
         try {
             setLoading(true);
-            // Load top games
-            const gamesData = await leaderboardAPI.getLeaderboard();
-            setTopGames(gamesData.slice(0, 10));
+            
+            // Load top games by difficulty
+            const gamesData = await leaderboardAPI.getTopGames(selectedDifficulty);
+            setTopGames(gamesData);
 
-            // Mock player stats - in a real app, this would come from the API
-            const playerStatsMap = new Map<number, PlayerStats>();
-            gamesData.forEach(game => {
-                const existing = playerStatsMap.get(game.rank) || {
-                    name: game.username,
-                    userId: game.rank,
-                    completedGames: 0,
-                    bestScore: 0,
-                    averageScore: 0,
-                    averageTime: 0
-                };
-
-                existing.completedGames += game.totalGames;
-                existing.bestScore = Math.max(existing.bestScore, game.totalScore);
-                existing.averageScore = game.averageScore;
-
-                playerStatsMap.set(game.rank, existing);
-            });
-
-            const players = Array.from(playerStatsMap.values())
-                .sort((a, b) => b.bestScore - a.bestScore)
-                .slice(0, 20);
-
-            setTopPlayers(players);
+            // Load top players
+            const playersData = await leaderboardAPI.getTopPlayers();
+            setTopPlayers(playersData);
         } catch (error) {
             console.error('Failed to load leaderboards:', error);
         } finally {
@@ -173,9 +165,9 @@ const Leaderboards = () => {
                                                 {selectedDifficulty}
                                             </span>
                                             <div className="score-info">
-                                                <div className="score-value">{game.totalScore.toLocaleString()}</div>
+                                                <div className="score-value">{game.score.toLocaleString()}</div>
                                                 <div className="score-details">
-                                                    {formatTime(120)} • {game.totalGames} moves
+                                                    {formatTime(game.time_elapsed || 0)} • {game.moves} moves
                                                 </div>
                                             </div>
                                         </div>
@@ -212,7 +204,7 @@ const Leaderboards = () => {
                                         <div className="player-header">
                                             <div className="player-left">
                                                 <span className="rank-icon">{getRankIcon(index)}</span>
-                                                <div className="player-name-large">{player.name}</div>
+                                                <div className="player-name-large">{player.username}</div>
                                             </div>
                                             <div className="player-right">
                                                 <div className="best-score">{player.bestScore.toLocaleString()}</div>
@@ -222,7 +214,7 @@ const Leaderboards = () => {
                                         <div className="player-stats">
                                             <div className="stat-item">
                                                 <div className="stat-icon-small">🎯</div>
-                                                <div className="stat-value-small">{player.completedGames}</div>
+                                                <div className="stat-value-small">{player.gamesCompleted}</div>
                                                 <div className="stat-label-small">Completed</div>
                                             </div>
                                             <div className="stat-item">
@@ -234,7 +226,7 @@ const Leaderboards = () => {
                                             </div>
                                             <div className="stat-item">
                                                 <div className="stat-icon-small">⏱️</div>
-                                                <div className="stat-value-small">{formatTime(player.averageTime)}</div>
+                                                <div className="stat-value-small">{formatTime(Math.round(player.averageTime || 0))}</div>
                                                 <div className="stat-label-small">Avg Time</div>
                                             </div>
                                         </div>
