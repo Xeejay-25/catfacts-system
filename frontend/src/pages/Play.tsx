@@ -7,6 +7,13 @@ const Play = () => {
     return (
         <div className="play-page">
             <div className="container">
+                <button
+                    className="btn btn-secondary back-button"
+                    onClick={() => navigate('/')}
+                    style={{ marginBottom: '1.5rem' }}
+                >
+                    ← Back to Home
+                </button>
                 <h1 className="page-title">Ready to Play?</h1>
                 <p className="page-subtitle">
                     Choose how you want to start your memory game adventure!
