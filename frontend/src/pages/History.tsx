@@ -101,9 +101,9 @@ const History = () => {
         <div className="history-page">
             {/* Header */}
             <div className="history-header">
-                <button className="back-button" onClick={() => navigate('/game')}>
+                <button className="back-button" onClick={() => navigate('/dashboard')}>
                     <span className="back-icon">←</span>
-                    Back to Game
+                    Back to Dashboard
                 </button>
                 <div className="header-content">
                     <h1 className="history-title">Game History</h1>
