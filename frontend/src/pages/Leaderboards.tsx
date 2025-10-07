@@ -3,121 +3,245 @@ import { useNavigate } from 'react-router-dom';
 import { leaderboardAPI, type LeaderboardEntry } from '../services/api';
 import './Leaderboards.css';
 
+interface PlayerStats {
+    name: string;
+    userId: number;
+    completedGames: number;
+    bestScore: number;
+    averageScore: number;
+    averageTime: number;
+}
+
 const Leaderboards = () => {
-    const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+    const [topGames, setTopGames] = useState<LeaderboardEntry[]>([]);
+    const [topPlayers, setTopPlayers] = useState<PlayerStats[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedDifficulty, setSelectedDifficulty] = useState<string>('easy');
     const navigate = useNavigate();
 
     useEffect(() => {
-        loadLeaderboard();
-    }, []);
+        loadLeaderboards();
+    }, [selectedDifficulty]);
 
-    const loadLeaderboard = async () => {
+    const loadLeaderboards = async () => {
         try {
             setLoading(true);
-            const data = await leaderboardAPI.getLeaderboard();
-            setLeaderboard(data);
+            // Load top games
+            const gamesData = await leaderboardAPI.getLeaderboard();
+            setTopGames(gamesData.slice(0, 10));
+
+            // Mock player stats - in a real app, this would come from the API
+            const playerStatsMap = new Map<number, PlayerStats>();
+            gamesData.forEach(game => {
+                const existing = playerStatsMap.get(game.rank) || {
+                    name: game.username,
+                    userId: game.rank,
+                    completedGames: 0,
+                    bestScore: 0,
+                    averageScore: 0,
+                    averageTime: 0
+                };
+
+                existing.completedGames += game.totalGames;
+                existing.bestScore = Math.max(existing.bestScore, game.totalScore);
+                existing.averageScore = game.averageScore;
+
+                playerStatsMap.set(game.rank, existing);
+            });
+
+            const players = Array.from(playerStatsMap.values())
+                .sort((a, b) => b.bestScore - a.bestScore)
+                .slice(0, 20);
+
+            setTopPlayers(players);
         } catch (error) {
-            console.error('Failed to load leaderboard:', error);
+            console.error('Failed to load leaderboards:', error);
         } finally {
             setLoading(false);
         }
     };
 
-    const getMedalEmoji = (rank: number) => {
-        if (rank === 1) return '🥇';
-        if (rank === 2) return '🥈';
-        if (rank === 3) return '🥉';
-        return `#${rank}`;
+    const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    const getRankIcon = (index: number) => {
+        if (index === 0) return '👑';
+        if (index === 1) return '🥈';
+        if (index === 2) return '🥉';
+        return `#${index + 1}`;
+    };
+
+    const difficultyColors: { [key: string]: string } = {
+        easy: 'badge-easy',
+        medium: 'badge-medium',
+        hard: 'badge-hard'
     };
 
     if (loading) {
         return (
             <div className="leaderboards-page">
-                <div className="container">
-                    <div className="loading">Loading leaderboards...</div>
-                </div>
+                <div className="loading">Loading leaderboards...</div>
             </div>
         );
     }
 
     return (
         <div className="leaderboards-page">
-            <div className="container">
-                <button
-                    className="btn btn-secondary back-button"
-                    onClick={() => navigate('/')}
-                    style={{ marginBottom: '1.5rem' }}
-                >
-                    ← Back to Home
+            {/* Header */}
+            <div className="leaderboards-header">
+                <button className="back-button" onClick={() => navigate('/game')}>
+                    <span className="back-icon">←</span>
+                    Back to Game
                 </button>
-                <h1 className="page-title">🏆 Leaderboards</h1>
-                <p className="page-subtitle">
-                    Top cat facts experts from around the world
-                </p>
+                <div className="header-content">
+                    <h1 className="leaderboards-title">🏆 Leaderboard</h1>
+                    <p className="leaderboards-subtitle">Top scores and player rankings</p>
+                </div>
+            </div>
 
-                {leaderboard.length === 0 ? (
-                    <div className="empty-state">
-                        <div className="empty-icon">🏆</div>
-                        <h2>No Rankings Yet</h2>
-                        <p>Be the first to compete and claim the top spot!</p>
-                    </div>
-                ) : (
-                    <div className="leaderboard-table">
-                        <div className="table-header">
-                            <div className="th rank-col">Rank</div>
-                            <div className="th player-col">Player</div>
-                            <div className="th games-col">Games</div>
-                            <div className="th score-col">Total Score</div>
-                            <div className="th avg-col">Avg Score</div>
+            {/* Two Column Layout */}
+            <div className="leaderboards-grid">
+                {/* Left Column - Top Game Scores */}
+                <div className="leaderboard-section">
+                    <div className="section-header">
+                        <div className="section-icon">🏆</div>
+                        <div className="section-title">
+                            <h2>Top Game Scores</h2>
+                            <p>Best individual game performances</p>
                         </div>
-                        <div className="table-body">
-                            {leaderboard.map((entry) => (
-                                <div
-                                    key={entry.username}
-                                    className={`table-row ${entry.rank <= 3 ? 'top-three' : ''}`}
-                                >
-                                    <div className="td rank-col">
-                                        <span className="rank-badge">{getMedalEmoji(entry.rank)}</span>
-                                    </div>
-                                    <div className="td player-col">
-                                        <div className="player-info">
-                                            <img
-                                                src={entry.avatar}
-                                                alt={entry.username}
-                                                className="player-avatar"
-                                            />
-                                            <span className="player-name">{entry.username}</span>
+                    </div>
+
+                    {/* Difficulty Filter */}
+                    <div className="difficulty-filters">
+                        <button
+                            className={`filter-btn ${selectedDifficulty === 'easy' ? 'active' : ''}`}
+                            onClick={() => setSelectedDifficulty('easy')}
+                        >
+                            Easy
+                        </button>
+                        <button
+                            className={`filter-btn ${selectedDifficulty === 'medium' ? 'active' : ''}`}
+                            onClick={() => setSelectedDifficulty('medium')}
+                        >
+                            Medium
+                        </button>
+                        <button
+                            className={`filter-btn ${selectedDifficulty === 'hard' ? 'active' : ''}`}
+                            onClick={() => setSelectedDifficulty('hard')}
+                        >
+                            Hard
+                        </button>
+                    </div>
+
+                    {/* Games List */}
+                    <div className="leaderboard-content">
+                        {topGames.length === 0 ? (
+                            <div className="empty-message">
+                                <p>No completed games yet!</p>
+                            </div>
+                        ) : (
+                            <div className="games-list">
+                                {topGames.map((game, index) => (
+                                    <div
+                                        key={game.username + index}
+                                        className={`game-entry ${index < 3 ? 'top-rank' : ''}`}
+                                    >
+                                        <div className="entry-left">
+                                            <span className="rank-icon">{getRankIcon(index)}</span>
+                                            <div className="player-details">
+                                                <div className="player-name">{game.username}</div>
+                                                <div className="game-date">
+                                                    {formatDate(new Date().toISOString())}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="entry-right">
+                                            <span className={`difficulty-badge ${difficultyColors[selectedDifficulty]}`}>
+                                                {selectedDifficulty}
+                                            </span>
+                                            <div className="score-info">
+                                                <div className="score-value">{game.totalScore.toLocaleString()}</div>
+                                                <div className="score-details">
+                                                    {formatTime(120)} • {game.totalGames} moves
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="td games-col">{entry.totalGames}</div>
-                                    <div className="td score-col">{entry.totalScore}</div>
-                                    <div className="td avg-col">{entry.averageScore.toFixed(1)}</div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
-                )}
+                </div>
 
-                <div className="stats-cards">
-                    <div className="stat-card">
-                        <div className="stat-icon">🎮</div>
-                        <div className="stat-value">{leaderboard.reduce((sum, e) => sum + e.totalGames, 0)}</div>
-                        <div className="stat-label">Total Games Played</div>
-                    </div>
-                    <div className="stat-card">
-                        <div className="stat-icon">👥</div>
-                        <div className="stat-value">{leaderboard.length}</div>
-                        <div className="stat-label">Active Players</div>
-                    </div>
-                    <div className="stat-card">
-                        <div className="stat-icon">⭐</div>
-                        <div className="stat-value">
-                            {leaderboard.length > 0
-                                ? (leaderboard.reduce((sum, e) => sum + e.averageScore, 0) / leaderboard.length).toFixed(1)
-                                : '0.0'}
+                {/* Right Column - Top Players */}
+                <div className="leaderboard-section">
+                    <div className="section-header">
+                        <div className="section-icon">⭐</div>
+                        <div className="section-title">
+                            <h2>Top Players</h2>
+                            <p>Best overall player statistics</p>
                         </div>
-                        <div className="stat-label">Average Score</div>
+                    </div>
+
+                    {/* Players List */}
+                    <div className="leaderboard-content">
+                        {topPlayers.length === 0 ? (
+                            <div className="empty-message">
+                                <p>No players yet!</p>
+                            </div>
+                        ) : (
+                            <div className="players-list">
+                                {topPlayers.map((player, index) => (
+                                    <div
+                                        key={player.userId}
+                                        className={`player-entry ${index < 3 ? 'top-rank' : ''}`}
+                                    >
+                                        <div className="player-header">
+                                            <div className="player-left">
+                                                <span className="rank-icon">{getRankIcon(index)}</span>
+                                                <div className="player-name-large">{player.name}</div>
+                                            </div>
+                                            <div className="player-right">
+                                                <div className="best-score">{player.bestScore.toLocaleString()}</div>
+                                                <div className="best-score-label">Best Score</div>
+                                            </div>
+                                        </div>
+                                        <div className="player-stats">
+                                            <div className="stat-item">
+                                                <div className="stat-icon-small">🎯</div>
+                                                <div className="stat-value-small">{player.completedGames}</div>
+                                                <div className="stat-label-small">Completed</div>
+                                            </div>
+                                            <div className="stat-item">
+                                                <div className="stat-icon-small">⭐</div>
+                                                <div className="stat-value-small">
+                                                    {Math.round(player.averageScore).toLocaleString()}
+                                                </div>
+                                                <div className="stat-label-small">Avg Score</div>
+                                            </div>
+                                            <div className="stat-item">
+                                                <div className="stat-icon-small">⏱️</div>
+                                                <div className="stat-value-small">{formatTime(player.averageTime)}</div>
+                                                <div className="stat-label-small">Avg Time</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
