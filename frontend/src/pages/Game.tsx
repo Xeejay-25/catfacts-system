@@ -117,21 +117,7 @@ const Game = () => {
         }
     };
 
-    const startNewGame = async () => {
-        if (!currentUser || !currentUser.id) return;
-
-        try {
-            const { pairs } = difficultyConfigs[difficulty];
-            const game = await gameAPI.startGame(currentUser.id, difficulty, pairs);
-            setCurrentGameId(game.id);
-            console.log('New game started with ID:', game.id);
-        } catch (error) {
-            console.error('Failed to start game in backend:', error);
-            // Continue anyway - we can still play without backend tracking
-        }
-    };
-
-    const initializeGame = useCallback(() => {
+    const initializeGame = useCallback(async () => {
         const { pairs } = difficultyConfigs[difficulty];
         const selectedEmojis = CAT_EMOJIS.slice(0, pairs);
         const cardPairs = selectedEmojis.flatMap((emoji, index) => [
@@ -150,9 +136,18 @@ const Game = () => {
         setUnlockedFacts([]);
         setIsGameActive(true);
 
-        // Start game in backend
-        startNewGame();
-    }, [difficulty]);
+        // Start game in backend - await this!
+        if (currentUser?.id) {
+            try {
+                console.log('🎮 Starting new game in backend...', { userId: currentUser.id, difficulty, pairs });
+                const game = await gameAPI.startGame(currentUser.id, difficulty, pairs);
+                setCurrentGameId(game.id);
+                console.log('✅ New game started with ID:', game.id, game);
+            } catch (error) {
+                console.error('❌ Failed to start game in backend:', error);
+            }
+        }
+    }, [difficulty, currentUser]);
 
     const handleCardClick = (cardId: number) => {
         if (!isGameActive || flippedCards.length >= 2) return;
