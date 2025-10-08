@@ -25,6 +25,7 @@ export interface Game {
     moves?: number;
     facts_collected?: number;
     factsCollected?: number;
+    status?: 'playing' | 'won' | 'abandoned';
 }
 
 export interface Question {
@@ -152,6 +153,74 @@ export const gameAPI = {
         return [];
     },
 
+    startGame: async (
+        userId: number,
+        difficulty: 'easy' | 'medium' | 'hard' = 'easy',
+        totalPairs: number = 6
+    ): Promise<Game> => {
+        const response = await fetch(`${API_BASE_URL}/games/start`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                userId,
+                difficulty,
+                totalPairs
+            }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to start game');
+        }
+
+        const game = await response.json();
+        return {
+            ...game,
+            userId: game.user_id || game.userId,
+            totalQuestions: game.total_questions || game.totalQuestions,
+            completedAt: game.completed_at || game.completedAt,
+            timeElapsed: game.time_elapsed || game.timeElapsed,
+            factsCollected: game.facts_collected || game.factsCollected
+        };
+    },
+
+    updateGame: async (
+        gameId: number,
+        data: {
+            score?: number;
+            moves?: number;
+            timeElapsed?: number;
+            matchedPairs?: number;
+            factsCollected?: number;
+            status?: 'playing' | 'won' | 'abandoned';
+        }
+    ): Promise<Game> => {
+        const response = await fetch(`${API_BASE_URL}/games/${gameId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to update game');
+        }
+
+        const game = await response.json();
+        return {
+            ...game,
+            userId: game.user_id || game.userId,
+            totalQuestions: game.total_questions || game.totalQuestions,
+            completedAt: game.completed_at || game.completedAt,
+            timeElapsed: game.time_elapsed || game.timeElapsed,
+            factsCollected: game.facts_collected || game.factsCollected
+        };
+    },
+
     submitGame: async (
         userId: number,
         score: number,
@@ -159,7 +228,8 @@ export const gameAPI = {
         difficulty: 'easy' | 'medium' | 'hard' = 'easy',
         timeElapsed: number = 0,
         moves: number = 0,
-        factsCollected: number = 0
+        factsCollected: number = 0,
+        status: 'playing' | 'won' | 'abandoned' = 'won'
     ): Promise<Game> => {
         const response = await fetch(`${API_BASE_URL}/games`, {
             method: 'POST',
@@ -173,7 +243,8 @@ export const gameAPI = {
                 difficulty,
                 timeElapsed,
                 moves,
-                factsCollected
+                factsCollected,
+                status
             }),
         });
 
