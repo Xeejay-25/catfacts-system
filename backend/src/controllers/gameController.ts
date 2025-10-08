@@ -4,28 +4,23 @@ import { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { Game } from '../types';
 
 /**
- * Submit a completed game
+ * Start a new game (status: 'playing')
  */
-export const submitGame = async (req: Request, res: Response) => {
+export const startGame = async (req: Request, res: Response) => {
     try {
         const {
             userId,
-            score,
-            totalQuestions,
             difficulty = 'easy',
-            timeElapsed = 0,
-            moves = 0,
-            factsCollected = 0
+            totalPairs = 6
         } = req.body;
 
-        console.log('🎮 Submitting game for user:', userId);
-        console.log('📊 Game data:', { userId, score, totalQuestions, difficulty, timeElapsed, moves, factsCollected });
+        console.log('🎮 Starting new game for user:', userId);
 
         // Validate required fields
-        if (!userId || score === undefined || !totalQuestions) {
-            console.log('❌ Validation failed - missing required fields');
+        if (!userId) {
+            console.log('❌ Validation failed - userId required');
             return res.status(400).json({
-                error: 'userId, score, and totalQuestions are required'
+                error: 'userId is required'
             });
         }
 
@@ -40,13 +35,166 @@ export const submitGame = async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Insert game record - matching actual database schema
+        // Insert game record with 'playing' status
+        console.log('💾 Creating new game in database...');
+        const [result] = await pool.execute<ResultSetHeader>(
+            `INSERT INTO games 
+            (user_id, difficulty, score, moves, time_elapsed, matched_pairs, total_pairs, collected_facts, status) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [userId, difficulty, 0, 0, 0, 0, totalPairs, 0, 'playing']
+        );
+
+        // Fetch the created game
+        const [newGame] = await pool.execute<RowDataPacket[]>(
+            'SELECT * FROM games WHERE id = ?',
+            [result.insertId]
+        );
+
+        console.log('✅ Game created successfully with ID:', result.insertId);
+        res.status(201).json(newGame[0]);
+    } catch (error) {
+        console.error('❌ Error starting game:', error);
+        res.status(500).json({ error: 'Failed to start game', details: error instanceof Error ? error.message : 'Unknown error' });
+    }
+};
+
+/**
+ * Update an existing game (status: 'playing' or 'won' or 'abandoned')
+ */
+export const updateGame = async (req: Request, res: Response) => {
+    try {
+        const { gameId } = req.params;
+        const {
+            score,
+            moves,
+            timeElapsed,
+            matchedPairs,
+            factsCollected,
+            status
+        } = req.body;
+
+        console.log('🎮 Updating game:', gameId);
+
+        // Validate status
+        const validStatuses = ['playing', 'won', 'abandoned'];
+        if (status && !validStatuses.includes(status)) {
+            return res.status(400).json({
+                error: 'Invalid status. Must be one of: playing, won, abandoned'
+            });
+        }
+
+        // Build update query dynamically
+        const updates: string[] = [];
+        const values: any[] = [];
+
+        if (score !== undefined) {
+            updates.push('score = ?');
+            values.push(score);
+        }
+        if (moves !== undefined) {
+            updates.push('moves = ?');
+            values.push(moves);
+        }
+        if (timeElapsed !== undefined) {
+            updates.push('time_elapsed = ?');
+            values.push(timeElapsed);
+        }
+        if (matchedPairs !== undefined) {
+            updates.push('matched_pairs = ?');
+            values.push(matchedPairs);
+        }
+        if (factsCollected !== undefined) {
+            updates.push('collected_facts = ?');
+            values.push(factsCollected);
+        }
+        if (status) {
+            updates.push('status = ?');
+            values.push(status);
+        }
+
+        if (updates.length === 0) {
+            return res.status(400).json({ error: 'No fields to update' });
+        }
+
+        values.push(gameId);
+
+        await pool.execute(
+            `UPDATE games SET ${updates.join(', ')} WHERE id = ?`,
+            values
+        );
+
+        // Fetch the updated game
+        const [updatedGame] = await pool.execute<RowDataPacket[]>(
+            'SELECT * FROM games WHERE id = ?',
+            [gameId]
+        );
+
+        if (updatedGame.length === 0) {
+            return res.status(404).json({ error: 'Game not found' });
+        }
+
+        console.log('✅ Game updated successfully');
+        res.json(updatedGame[0]);
+    } catch (error) {
+        console.error('❌ Error updating game:', error);
+        res.status(500).json({ error: 'Failed to update game', details: error instanceof Error ? error.message : 'Unknown error' });
+    }
+};
+
+/**
+ * Submit a completed game (status: 'won') - kept for backward compatibility
+ * @deprecated Use startGame + updateGame instead
+ */
+export const submitGame = async (req: Request, res: Response) => {
+    try {
+        const {
+            userId,
+            score,
+            totalQuestions,
+            difficulty = 'easy',
+            timeElapsed = 0,
+            moves = 0,
+            factsCollected = 0,
+            status = 'won'  // Default to 'won' for completed games
+        } = req.body;
+
+        console.log('🎮 Submitting game for user:', userId);
+        console.log('📊 Game data:', { userId, score, totalQuestions, difficulty, timeElapsed, moves, factsCollected, status });
+
+        // Validate required fields
+        if (!userId || score === undefined || !totalQuestions) {
+            console.log('❌ Validation failed - missing required fields');
+            return res.status(400).json({
+                error: 'userId, score, and totalQuestions are required'
+            });
+        }
+
+        // Validate status
+        const validStatuses = ['playing', 'won', 'abandoned'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({
+                error: 'Invalid status. Must be one of: playing, won, abandoned'
+            });
+        }
+
+        // Verify user exists
+        const [users] = await pool.execute<RowDataPacket[]>(
+            'SELECT id FROM users WHERE id = ?',
+            [userId]
+        );
+
+        if (users.length === 0) {
+            console.log('❌ User not found');
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Insert game record with proper status
         console.log('💾 Inserting game into database...');
         const [result] = await pool.execute<ResultSetHeader>(
             `INSERT INTO games 
             (user_id, difficulty, score, moves, time_elapsed, matched_pairs, total_pairs, collected_facts, status) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [userId, difficulty, score, moves, timeElapsed, totalQuestions, totalQuestions, factsCollected, 'completed']
+            [userId, difficulty, score, moves, timeElapsed, totalQuestions, totalQuestions, factsCollected, status]
         );
 
         // Fetch the created game
@@ -123,12 +271,12 @@ export const getTopGames = async (req: Request, res: Response) => {
                 g.moves,
                 g.time_elapsed,
                 g.difficulty,
-                g.id as completed_at,
+                g.created_at as completed_at,
                 u.name as username,
                 CONCAT("https://api.dicebear.com/7.x/avataaars/svg?seed=", u.name) as avatar
              FROM games g
              JOIN users u ON g.user_id = u.id
-             WHERE g.difficulty = ?
+             WHERE g.difficulty = ? AND g.status = 'won'
              ORDER BY g.score DESC, g.moves ASC, g.time_elapsed ASC
              LIMIT 10`
             ,
@@ -159,7 +307,7 @@ export const getTopPlayers = async (req: Request, res: Response) => {
                 AVG(g.score) as average_score,
                 AVG(g.time_elapsed) as average_time
              FROM users u
-             LEFT JOIN games g ON u.id = g.user_id
+             LEFT JOIN games g ON u.id = g.user_id AND g.status = 'won'
              GROUP BY u.id, u.name
              HAVING games_completed > 0
              ORDER BY best_score DESC, average_score DESC, games_completed DESC
@@ -189,7 +337,7 @@ export const getLeaderboard = async (req: Request, res: Response) => {
                 SUM(g.score) as total_score,
                 AVG(g.score) as average_score
              FROM users u
-             LEFT JOIN games g ON u.id = g.user_id
+             LEFT JOIN games g ON u.id = g.user_id AND g.status = 'won'
              GROUP BY u.id, u.name
              HAVING total_games > 0
              ORDER BY total_score DESC, average_score DESC
@@ -221,8 +369,8 @@ export const getUserStats = async (req: Request, res: Response) => {
         const [rows] = await pool.execute<RowDataPacket[]>(
             `SELECT 
                 COUNT(g.id) as total_games,
-                SUM(g.score) as total_score,
-                AVG(g.score) as average_score,
+                SUM(CASE WHEN g.status = 'won' THEN g.score ELSE 0 END) as total_score,
+                AVG(CASE WHEN g.status = 'won' THEN g.score ELSE NULL END) as average_score,
                 MAX(g.score) as best_score,
                 SUM(g.time_elapsed) as total_time_played,
                 SUM(g.moves) as total_moves,
