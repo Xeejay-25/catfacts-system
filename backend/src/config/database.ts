@@ -29,10 +29,10 @@ export const testConnection = async () => {
     }
 };
 
-// Initialize database tables if they don't exist
+// Initialize database tables - verify they exist
 export const initializeTables = async () => {
     try {
-        // Check if tables exist - don't create them since they already exist in your database
+        // Check if tables exist
         const [userTables] = await pool.execute<RowDataPacket[]>(
             "SHOW TABLES LIKE 'users'"
         );
@@ -42,10 +42,13 @@ export const initializeTables = async () => {
 
         if (userTables.length > 0 && gameTables.length > 0) {
             console.log('✅ Database tables verified (users, games)');
+            return true;
         } else {
             console.log('⚠️  Warning: Expected tables (users, games) may not exist');
+            return false;
         }
     } catch (error) {
         console.error('❌ Failed to check tables:', error);
+        return false;
     }
 };
