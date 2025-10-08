@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { pool } from '../config/database';
 import { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { Game } from '../types';
+import { randomUUID } from 'crypto';
 
 /**
  * Start a new game (status: 'playing')
@@ -35,13 +36,16 @@ export const startGame = async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        // Generate unique session_id
+        const sessionId = randomUUID();
+
         // Insert game record with 'playing' status
-        console.log('💾 Creating new game in database...');
+        console.log('💾 Creating new game in database with session_id:', sessionId);
         const [result] = await pool.execute<ResultSetHeader>(
             `INSERT INTO games 
-            (user_id, difficulty, score, moves, time_elapsed, matched_pairs, total_pairs, collected_facts, status) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [userId, difficulty, 0, 0, 0, 0, totalPairs, 0, 'playing']
+            (user_id, session_id, difficulty, score, moves, time_elapsed, matched_pairs, total_pairs, collected_facts, status) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [userId, sessionId, difficulty, 0, 0, 0, 0, totalPairs, '[]', 'playing']
         );
 
         // Fetch the created game
@@ -105,11 +109,20 @@ export const updateGame = async (req: Request, res: Response) => {
         }
         if (factsCollected !== undefined) {
             updates.push('collected_facts = ?');
-            values.push(factsCollected);
+            // Convert to JSON string if it's a number or array
+            const factsValue = typeof factsCollected === 'number'
+                ? JSON.stringify([])
+                : (typeof factsCollected === 'string' ? factsCollected : JSON.stringify(factsCollected));
+            values.push(factsValue);
         }
         if (status) {
             updates.push('status = ?');
             values.push(status);
+
+            // Set completed_at timestamp if status is 'won' or 'abandoned'
+            if (status === 'won' || status === 'abandoned') {
+                updates.push('completed_at = NOW()');
+            }
         }
 
         if (updates.length === 0) {
@@ -188,13 +201,19 @@ export const submitGame = async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        // Generate unique session_id
+        const sessionId = randomUUID();
+
+        // Convert factsCollected to JSON string for TEXT field
+        const factsJson = typeof factsCollected === 'number' ? '[]' : JSON.stringify(factsCollected);
+
         // Insert game record with proper status
-        console.log('💾 Inserting game into database...');
+        console.log('💾 Inserting game into database with session_id:', sessionId);
         const [result] = await pool.execute<ResultSetHeader>(
             `INSERT INTO games 
-            (user_id, difficulty, score, moves, time_elapsed, matched_pairs, total_pairs, collected_facts, status) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [userId, difficulty, score, moves, timeElapsed, totalQuestions, totalQuestions, factsCollected, status]
+            (user_id, session_id, difficulty, score, moves, time_elapsed, matched_pairs, total_pairs, collected_facts, status) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [userId, sessionId, difficulty, score, moves, timeElapsed, totalQuestions, totalQuestions, factsJson, status]
         );
 
         // Fetch the created game
@@ -220,11 +239,11 @@ export const getUserGames = async (req: Request, res: Response) => {
         console.log('📊 Fetching games for user:', userId);
 
         const [rows] = await pool.execute<RowDataPacket[]>(
-            `SELECT g.*, u.name as username, CONCAT("https://api.dicebear.com/7.x/avataaars/svg?seed=", u.name) as avatar 
+            `SELECT g.*, u.name as username, COALESCE(u.avatar, CONCAT("https://api.dicebear.com/7.x/avataaars/svg?seed=", u.name)) as avatar 
              FROM games g
              JOIN users u ON g.user_id = u.id
              WHERE g.user_id = ?
-             ORDER BY g.id DESC`,
+             ORDER BY g.created_at DESC`,
             [userId]
         );
 
@@ -242,10 +261,10 @@ export const getUserGames = async (req: Request, res: Response) => {
 export const getAllGames = async (req: Request, res: Response) => {
     try {
         const [rows] = await pool.execute<RowDataPacket[]>(
-            `SELECT g.*, u.name as username, CONCAT("https://api.dicebear.com/7.x/avataaars/svg?seed=", u.name) as avatar 
+            `SELECT g.*, u.name as username, COALESCE(u.avatar, CONCAT("https://api.dicebear.com/7.x/avataaars/svg?seed=", u.name)) as avatar 
              FROM games g
              JOIN users u ON g.user_id = u.id
-             ORDER BY g.id DESC
+             ORDER BY g.created_at DESC
              LIMIT 100`
         );
 
@@ -271,9 +290,9 @@ export const getTopGames = async (req: Request, res: Response) => {
                 g.moves,
                 g.time_elapsed,
                 g.difficulty,
-                g.created_at as completed_at,
+                g.completed_at,
                 u.name as username,
-                CONCAT("https://api.dicebear.com/7.x/avataaars/svg?seed=", u.name) as avatar
+                COALESCE(u.avatar, CONCAT("https://api.dicebear.com/7.x/avataaars/svg?seed=", u.name)) as avatar
              FROM games g
              JOIN users u ON g.user_id = u.id
              WHERE g.difficulty = ? AND g.status = 'won'
@@ -301,7 +320,7 @@ export const getTopPlayers = async (req: Request, res: Response) => {
             `SELECT 
                 u.id as user_id,
                 u.name as username,
-                CONCAT("https://api.dicebear.com/7.x/avataaars/svg?seed=", u.name) as avatar,
+                COALESCE(u.avatar, CONCAT("https://api.dicebear.com/7.x/avataaars/svg?seed=", u.name)) as avatar,
                 COUNT(g.id) as games_completed,
                 MAX(g.score) as best_score,
                 AVG(g.score) as average_score,
@@ -332,7 +351,7 @@ export const getLeaderboard = async (req: Request, res: Response) => {
         const [rows] = await pool.execute<RowDataPacket[]>(
             `SELECT 
                 u.name as username,
-                CONCAT("https://api.dicebear.com/7.x/avataaars/svg?seed=", u.name) as avatar,
+                COALESCE(u.avatar, CONCAT("https://api.dicebear.com/7.x/avataaars/svg?seed=", u.name)) as avatar,
                 COUNT(g.id) as total_games,
                 SUM(g.score) as total_score,
                 AVG(g.score) as average_score
