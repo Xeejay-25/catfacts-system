@@ -210,7 +210,7 @@ const History = () => {
                             <div key={game.id} className="game-item">
                                 <div className="game-item-header">
                                     <div className="game-item-title">
-                                        <span>Player1 - Game #{games.length - index}</span>
+                                        <span>{game.username || currentUser?.name || 'Player'} - Game #{games.length - index}</span>
                                         <span className={`badge badge-${difficulty}`}>
                                             {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
                                         </span>
