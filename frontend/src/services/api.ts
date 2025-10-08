@@ -14,15 +14,21 @@ export interface Game {
     id: number;
     user_id?: number;
     userId?: number;
+    username?: string;  // Username from joined users table
+    avatar?: string;    // Avatar from joined users table
     score: number;
     total_questions?: number;
     totalQuestions?: number;
     completed_at?: string;
     completedAt?: string;
+    created_at?: string;
+    createdAt?: string;
     difficulty?: 'easy' | 'medium' | 'hard';
     time_elapsed?: number;
     timeElapsed?: number;
     moves?: number;
+    matched_pairs?: number;
+    matchedPairs?: number;
     facts_collected?: number;
     factsCollected?: number;
     status?: 'playing' | 'won' | 'abandoned';
