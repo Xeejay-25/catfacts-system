@@ -2,6 +2,7 @@ import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { testConnection, initializeTables } from './config/database';
+import { runMigrations } from './config/migrate';
 
 // Import routes
 import userRoutes from './routes/userRoutes';
@@ -80,7 +81,10 @@ const startServer = async () => {
             process.exit(1);
         }
 
-        // Initialize database tables
+        // Run database migrations
+        await runMigrations();
+
+        // Initialize/verify database tables
         await initializeTables();
 
         // Start listening
