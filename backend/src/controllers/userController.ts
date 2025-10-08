@@ -10,7 +10,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
     try {
         console.log('📋 Fetching all users from database (users table)...');
         const [rows] = await pool.execute<RowDataPacket[]>(
-            'SELECT id, name as username, CONCAT("https://api.dicebear.com/7.x/avataaars/svg?seed=", name) as avatar, created_at FROM users ORDER BY created_at DESC'
+            'SELECT id, name as username, COALESCE(avatar, CONCAT("https://api.dicebear.com/7.x/avataaars/svg?seed=", name)) as avatar, created_at FROM users ORDER BY created_at DESC'
         );
         console.log(`✅ Found ${rows.length} users:`, rows);
         res.json(rows);
@@ -27,7 +27,7 @@ export const getUserById = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const [rows] = await pool.execute<RowDataPacket[]>(
-            'SELECT id, name as username, CONCAT("https://api.dicebear.com/7.x/avataaars/svg?seed=", name) as avatar, created_at FROM users WHERE id = ?',
+            'SELECT id, name as username, COALESCE(avatar, CONCAT("https://api.dicebear.com/7.x/avataaars/svg?seed=", name)) as avatar, created_at FROM users WHERE id = ?',
             [id]
         );
 
@@ -79,16 +79,16 @@ export const createUser = async (req: Request, res: Response) => {
             return res.status(409).json({ error: 'Username already exists' });
         }
 
-        // Insert new user into users table (matching your schema)
+        // Insert new user into users table with avatar
         console.log('💾 Inserting user into database...');
         const [result] = await pool.execute<ResultSetHeader>(
-            'INSERT INTO users (name, email) VALUES (?, ?)',
-            [username, `${username.toLowerCase()}@example.com`]
+            'INSERT INTO users (name, email, avatar) VALUES (?, ?, ?)',
+            [username, `${username.toLowerCase()}@example.com`, avatar]
         );
 
         // Fetch the created user
         const [newUser] = await pool.execute<RowDataPacket[]>(
-            'SELECT id, name as username, CONCAT("https://api.dicebear.com/7.x/avataaars/svg?seed=", name) as avatar, created_at FROM users WHERE id = ?',
+            'SELECT id, name as username, avatar, created_at FROM users WHERE id = ?',
             [result.insertId]
         );
 
