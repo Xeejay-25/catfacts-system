@@ -1,6 +1,8 @@
 import express from 'express';
 import {
     submitGame,
+    startGame,
+    updateGame,
     getUserGames,
     getAllGames,
     getLeaderboard,
@@ -11,7 +13,13 @@ import {
 
 const router = express.Router();
 
-// POST /api/games - Submit a completed game
+// POST /api/games/start - Start a new game
+router.post('/start', startGame);
+
+// PUT /api/games/:gameId - Update an existing game
+router.put('/:gameId', updateGame);
+
+// POST /api/games - Submit a completed game (legacy - kept for backward compatibility)
 router.post('/', submitGame);
 
 // GET /api/games/user/:userId - Get games for a specific user (History)
