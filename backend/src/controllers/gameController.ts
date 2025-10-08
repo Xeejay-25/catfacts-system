@@ -19,9 +19,11 @@ export const submitGame = async (req: Request, res: Response) => {
         } = req.body;
 
         console.log('🎮 Submitting game for user:', userId);
+        console.log('📊 Game data:', { userId, score, totalQuestions, difficulty, timeElapsed, moves, factsCollected });
 
         // Validate required fields
         if (!userId || score === undefined || !totalQuestions) {
+            console.log('❌ Validation failed - missing required fields');
             return res.status(400).json({
                 error: 'userId, score, and totalQuestions are required'
             });
@@ -38,13 +40,13 @@ export const submitGame = async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Insert game record
+        // Insert game record - matching actual database schema
         console.log('💾 Inserting game into database...');
         const [result] = await pool.execute<ResultSetHeader>(
             `INSERT INTO games 
-            (user_id, score, total_questions, difficulty, time_elapsed, moves, matched_pairs, total_pairs, collected_facts) 
+            (user_id, difficulty, score, moves, time_elapsed, matched_pairs, total_pairs, collected_facts, status) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [userId, score, totalQuestions, difficulty, timeElapsed, moves, totalQuestions, totalQuestions, factsCollected]
+            [userId, difficulty, score, moves, timeElapsed, totalQuestions, totalQuestions, factsCollected, 'completed']
         );
 
         // Fetch the created game
@@ -53,11 +55,11 @@ export const submitGame = async (req: Request, res: Response) => {
             [result.insertId]
         );
 
-        console.log('✅ Game saved successfully');
+        console.log('✅ Game saved successfully with ID:', result.insertId);
         res.status(201).json(newGame[0]);
     } catch (error) {
         console.error('❌ Error submitting game:', error);
-        res.status(500).json({ error: 'Failed to submit game' });
+        res.status(500).json({ error: 'Failed to submit game', details: error instanceof Error ? error.message : 'Unknown error' });
     }
 };
 
