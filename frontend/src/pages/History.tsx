@@ -31,9 +31,11 @@ const History = () => {
         try {
             setLoading(true);
             const userGames = await gameAPI.getUserGames(userId);
-            setGames(userGames.sort((a, b) =>
-                new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
-            ));
+            setGames(userGames.sort((a, b) => {
+                const dateA = a.completedAt ? new Date(a.completedAt).getTime() : 0;
+                const dateB = b.completedAt ? new Date(b.completedAt).getTime() : 0;
+                return dateB - dateA;
+            }));
         } catch (error) {
             console.error('Failed to load games:', error);
         } finally {
@@ -46,8 +48,10 @@ const History = () => {
 
         if (statusFilter !== 'all') {
             filtered = filtered.filter(game => {
-                if (statusFilter === 'completed') return game.score > 0;
-                if (statusFilter === 'abandoned') return game.score === 0;
+                const gameStatus = game.status || (game.score === 0 ? 'abandoned' : 'won');
+                if (statusFilter === 'completed') return gameStatus === 'won';
+                if (statusFilter === 'abandoned') return gameStatus === 'abandoned';
+                if (statusFilter === 'playing') return gameStatus === 'playing';
                 return true;
             });
         }
@@ -78,7 +82,10 @@ const History = () => {
     };
 
     // Calculate statistics
-    const completedGames = games.filter(g => g.score > 0);
+    const completedGames = games.filter(g => {
+        const gameStatus = g.status || (g.score > 0 ? 'won' : 'abandoned');
+        return gameStatus === 'won';
+    });
     const stats = {
         totalGames: games.length,
         completedGames: completedGames.length,
@@ -151,6 +158,7 @@ const History = () => {
                         >
                             <option value="all">All</option>
                             <option value="completed">Completed</option>
+                            <option value="playing">In Progress</option>
                             <option value="abandoned">Abandoned</option>
                         </select>
                     </div>
@@ -189,24 +197,29 @@ const History = () => {
             ) : (
                 <div className="games-list">
                     {filteredGames.map((game, index) => {
-                        const isAbandoned = game.score === 0;
-                        const status = isAbandoned ? 'abandoned' : 'completed';
+                        const gameStatus = game.status || (game.score === 0 ? 'abandoned' : 'won');
                         const difficulty = game.difficulty || 'easy';
+
+                        const statusLabels = {
+                            'won': 'Won',
+                            'abandoned': 'Abandoned',
+                            'playing': 'In Progress'
+                        };
 
                         return (
                             <div key={game.id} className="game-item">
                                 <div className="game-item-header">
                                     <div className="game-item-title">
-                                        <span>Player1 - Game #{games.length - index}</span>
+                                        <span>{game.username || currentUser?.name || 'Player'} - Game #{games.length - index}</span>
                                         <span className={`badge badge-${difficulty}`}>
                                             {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
                                         </span>
-                                        <span className={`badge badge-${status}`}>
-                                            {status === 'completed' ? 'Completed' : 'Abandoned'}
+                                        <span className={`badge badge-${gameStatus}`}>
+                                            {statusLabels[gameStatus as keyof typeof statusLabels]}
                                         </span>
                                     </div>
                                     <div className="game-item-date">
-                                        {formatDate(game.completedAt)}
+                                        {game.completedAt ? formatDate(game.completedAt) : 'N/A'}
                                     </div>
                                 </div>
                                 <div className="game-item-stats">

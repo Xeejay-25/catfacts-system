@@ -67,7 +67,7 @@ const Dashboard = () => {
                         </div>
                     </div>
                     <div className="header-actions">
-                        <button className="action-card" onClick={() => navigate('/play')}>
+                        <button className="action-card" onClick={() => navigate('/game')}>
                             <div className="action-icon">🎮</div>
                             <div className="action-label">Play Game</div>
                         </button>

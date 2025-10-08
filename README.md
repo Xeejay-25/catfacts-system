@@ -1,13 +1,20 @@
-# CatFacts System - Standalone React + TypeScript Project
+# CatFacts System - Full Stack React + Express Application
 
-A complete cat facts trivia game application built with React + TypeScript (frontend) and Express.js (backend - to be added).
+A complete cat facts memory game application with React + TypeScript frontend and Express.js + MySQL backend.
 
 ## 🎯 Project Structure
 
 ```
 catfacts-system/
- ├── backend/      ← Express.js server (to be added later)
- └── frontend/     ← React + TypeScript app (COMPLETED)
+ ├── backend/      ← Express.js + MySQL server (COMPLETED ✅)
+ │   ├── src/
+ │   │   ├── config/        # Database configuration
+ │   │   ├── controllers/   # Request handlers
+ │   │   ├── routes/        # API routes
+ │   │   ├── services/      # Business logic
+ │   │   └── types/         # TypeScript types
+ │   └── package.json
+ └── frontend/     ← React + TypeScript app (COMPLETED ✅)
      ├── src/
      │   ├── components/
      │   │   └── layout/
@@ -24,24 +31,25 @@ catfacts-system/
      │   │   ├── History.tsx
      │   │   └── Dashboard.tsx
      │   ├── services/
-     │   │   └── api.ts
+     │   │   └── api.ts        # Backend API client
      │   └── App.tsx
      └── package.json
 ```
 
 ## 🚀 Features
 
-### Completed Frontend Features
+### Full Stack Implementation
 
 - ✅ **Welcome Page** - Hero section with features and call-to-action
-- ✅ **User Management** - Create account, select user, user avatars
-- ✅ **Play Game** - Choose difficulty levels (Easy, Medium, Hard)
-- ✅ **Game Interface** - Question/answer interface with real-time feedback
-- ✅ **Leaderboards** - View top players and rankings
-- ✅ **History** - Track your game history and statistics
-- ✅ **Dashboard** - User profile with stats and quick actions
+- ✅ **User Management** - Create account, select user, user avatars (Saved to MySQL)
+- ✅ **Play Game** - Memory matching game with cat emojis
+- ✅ **Game Recording** - Results saved to database with score, time, moves
+- ✅ **Leaderboards** - Real-time rankings from database
+- ✅ **History** - User-specific game history from database
+- ✅ **Dashboard** - User profile with statistics
 - ✅ **Responsive Design** - Works on mobile, tablet, and desktop
-- ✅ **Mock API** - Placeholder API service ready for backend integration
+- ✅ **REST API** - Complete backend with MySQL integration
+- ✅ **Cat Facts API** - Integration with CatFacts Ninja API
 
 ## 🎨 Design System
 
@@ -67,12 +75,53 @@ catfacts-system/
 - **React Router** - Navigation
 - **CSS3** - Styling with CSS variables
 
-### Backend (To Be Added)
+### Backend
 - **Express.js** - Node.js framework
 - **TypeScript** - Type safety
-- **CatFacts API** - External cat facts data
+- **MySQL** - Database (with mysql2)
+- **CatFacts Ninja API** - External cat facts data
+- **CORS** - Cross-origin support
+- **dotenv** - Environment configuration
 
 ## 📦 Installation & Setup
+
+### Prerequisites
+- Node.js (v16 or higher)
+- MySQL Server
+- Database named `catfacts` created in MySQL
+
+### Backend Setup
+
+1. Navigate to the backend directory:
+   ```powershell
+   cd catfacts-system/backend
+   ```
+
+2. Install dependencies:
+   ```powershell
+   npm install
+   ```
+
+3. Configure environment variables in `.env`:
+   ```env
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=catfacts
+   DB_USERNAME=root
+   DB_PASSWORD=2532
+   PORT=3001
+   NODE_ENV=development
+   ```
+
+4. Start development server:
+   ```powershell
+   npm run dev
+   ```
+   
+   The backend will:
+   - Connect to MySQL database
+   - Auto-create tables if they don't exist
+   - Start server on `http://localhost:3001`
 
 ### Frontend Setup
 
@@ -86,12 +135,68 @@ catfacts-system/
    npm install
    ```
 
-3. Start development server:
+3. Configure environment variables in `.env`:
+   ```env
+   VITE_API_URL=http://localhost:3001/api
+   ```
+
+4. Start development server:
    ```powershell
    npm run dev
    ```
 
-4. Open browser to: `http://localhost:5173`
+5. Open browser to: `http://localhost:5173`
+
+## 🗄️ Database Schema
+
+### User Table
+Stores player profiles.
+```sql
+CREATE TABLE user (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    avatar VARCHAR(500) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Game Table
+Records all game sessions.
+```sql
+CREATE TABLE game (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    score INT NOT NULL,
+    total_questions INT NOT NULL,
+    difficulty ENUM('easy', 'medium', 'hard') DEFAULT 'easy',
+    time_elapsed INT DEFAULT 0,
+    moves INT DEFAULT 0,
+    facts_collected INT DEFAULT 0,
+    completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
+);
+```
+
+## 🔌 API Endpoints
+
+### Users
+- `GET /api/users` - Get all users
+- `GET /api/users/:id` - Get user by ID
+- `POST /api/users` - Create new user
+- `DELETE /api/users/:id` - Delete user
+
+### Games
+- `POST /api/games` - Submit game result
+- `GET /api/games/user/:userId` - Get user's game history
+- `GET /api/games/user/:userId/stats` - Get user statistics
+- `GET /api/games/leaderboard` - Get leaderboard rankings
+
+### Cat Facts
+- `GET /api/catfacts/game?pairs=6` - Get facts for game
+- `GET /api/catfacts/random` - Get random cat fact
+
+### Health
+- `GET /api/health` - Server health check
 
 ## 📱 Pages Overview
 

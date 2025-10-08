@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { gameAPI } from '../services/api';
 import './Game.css';
 
 interface Card {
@@ -26,6 +27,7 @@ const CAT_FACTS = [
 const Game = () => {
     const navigate = useNavigate();
     const [currentUser, setCurrentUser] = useState<any>(null);
+    const [currentGameId, setCurrentGameId] = useState<number | null>(null);
     const [cards, setCards] = useState<Card[]>([]);
     const [flippedCards, setFlippedCards] = useState<number[]>([]);
     const [moves, setMoves] = useState(0);
@@ -67,7 +69,55 @@ const Game = () => {
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
-    const initializeGame = useCallback(() => {
+    const saveGameToBackend = async (finalScore: number, pairs: number, gameStatus: 'won' | 'abandoned') => {
+        if (!currentUser || !currentUser.id) {
+            console.log('❌ Cannot save game - no current user');
+            return;
+        }
+
+        console.log('💾 Saving game to backend:', {
+            gameId: currentGameId,
+            status: gameStatus,
+            score: finalScore,
+            moves,
+            time,
+            pairs,
+            factsCollected: unlockedFacts.length
+        });
+
+        try {
+            // If we have an active game, update it; otherwise create a new one
+            if (currentGameId) {
+                const updatedGame = await gameAPI.updateGame(currentGameId, {
+                    score: finalScore,
+                    moves,
+                    timeElapsed: time,
+                    matchedPairs: pairs,
+                    factsCollected: unlockedFacts.length,
+                    status: gameStatus
+                });
+                console.log(`✅ Game ${currentGameId} updated with status: ${gameStatus}`, updatedGame);
+            } else {
+                // Fallback to legacy submit method
+                const savedGame = await gameAPI.submitGame(
+                    currentUser.id,
+                    finalScore,
+                    pairs,
+                    difficulty,
+                    time,
+                    moves,
+                    unlockedFacts.length,
+                    gameStatus
+                );
+                console.log(`✅ Game saved with status: ${gameStatus}`, savedGame);
+            }
+        } catch (error) {
+            console.error('❌ Failed to save game:', error);
+            // Don't show error to user - game completion is more important
+        }
+    };
+
+    const initializeGame = useCallback(async () => {
         const { pairs } = difficultyConfigs[difficulty];
         const selectedEmojis = CAT_EMOJIS.slice(0, pairs);
         const cardPairs = selectedEmojis.flatMap((emoji, index) => [
@@ -85,7 +135,19 @@ const Game = () => {
         setTime(0);
         setUnlockedFacts([]);
         setIsGameActive(true);
-    }, [difficulty]);
+
+        // Start game in backend - await this!
+        if (currentUser?.id) {
+            try {
+                console.log('🎮 Starting new game in backend...', { userId: currentUser.id, difficulty, pairs });
+                const game = await gameAPI.startGame(currentUser.id, difficulty, pairs);
+                setCurrentGameId(game.id);
+                console.log('✅ New game started with ID:', game.id, game);
+            } catch (error) {
+                console.error('❌ Failed to start game in backend:', error);
+            }
+        }
+    }, [difficulty, currentUser]);
 
     const handleCardClick = (cardId: number) => {
         if (!isGameActive || flippedCards.length >= 2) return;
@@ -114,7 +176,8 @@ const Game = () => {
                             ? { ...c, isMatched: true }
                             : c
                     ));
-                    setMatchedPairs(matchedPairs + 1);
+                    const newMatchedPairs = matchedPairs + 1;
+                    setMatchedPairs(newMatchedPairs);
                     setScore(score + 100);
 
                     // Unlock a new fact
@@ -124,8 +187,10 @@ const Game = () => {
                     setFlippedCards([]);
 
                     // Check if game is complete
-                    if (matchedPairs + 1 === difficultyConfigs[difficulty].pairs) {
+                    if (newMatchedPairs === difficultyConfigs[difficulty].pairs) {
                         setIsGameActive(false);
+                        // Save game to backend with 'won' status
+                        saveGameToBackend(score + 100, newMatchedPairs, 'won');
                     }
                 }, 500);
             } else {
@@ -146,15 +211,35 @@ const Game = () => {
         initializeGame();
     };
 
-    const handleExitGame = () => {
+    const handleExitGame = async () => {
+        // Save game as abandoned if it was active
+        if (isGameActive && currentGameId) {
+            console.log('🚪 Exiting game - saving as abandoned...');
+            console.log('Game data:', {
+                gameId: currentGameId,
+                score,
+                matchedPairs,
+                moves,
+                time,
+                factsCollected: unlockedFacts.length
+            });
+            await saveGameToBackend(score, matchedPairs, 'abandoned');
+        }
         setIsGameActive(false);
         setCards([]);
+        setCurrentGameId(null);
     };
 
-    const handleDifficultyChange = (newDifficulty: 'easy' | 'medium' | 'hard') => {
+    const handleDifficultyChange = async (newDifficulty: 'easy' | 'medium' | 'hard') => {
+        // Save current game as abandoned if active
+        if (isGameActive && currentGameId) {
+            console.log('🔄 Changing difficulty - saving current game as abandoned...');
+            await saveGameToBackend(score, matchedPairs, 'abandoned');
+        }
         setDifficulty(newDifficulty);
         setIsGameActive(false);
         setCards([]);
+        setCurrentGameId(null);
     };
 
     const totalPairs = difficultyConfigs[difficulty].pairs;
