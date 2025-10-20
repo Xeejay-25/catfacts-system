@@ -94,7 +94,7 @@ const Leaderboards = () => {
         <div className="leaderboards-page">
             {/* Header */}
             <div className="leaderboards-header">
-                <button className="back-button" onClick={() => navigate('/game')}>
+                <button className="back-button" onClick={() => navigate('/game')} style={{ marginBottom: '1.5rem', backgroundColor: '#000', color: '#fff' }}>
                     <span className="back-icon">←</span>
                     Back to Game
                 </button>
