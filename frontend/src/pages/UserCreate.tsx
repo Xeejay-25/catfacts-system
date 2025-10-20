@@ -57,7 +57,7 @@ const UserCreate = () => {
                 <button
                     className="btn btn-secondary back-button"
                     onClick={() => navigate('/play')}
-                    style={{ marginBottom: '1.5rem' }}
+                    style={{ marginBottom: '1.5rem', backgroundColor: '#000', color: '#fff' }}
                 >
                     ← Back
                 </button>
