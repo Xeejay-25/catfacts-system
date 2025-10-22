@@ -12,7 +12,7 @@ interface Card {
     isMatched: boolean;
 }
 
-const CAT_EMOJIS = ['🐱', '🐈', '😺', '😸', '😻', '🙀', '😿', '😾'];
+const CAT_EMOJIS = ['🐱', '🐈', '😺', '😸', '😻', '🙀', '😿', '😾', '😼', '😽', '🐈‍⬛', '🐾', '🦁', '🐯', '🐅', '🐆', '🦒', '🦓'];
 
 const CAT_FACTS = [
     "Cats spend 70% of their lives sleeping, which means a 9-year-old cat has been awake for only three years!",
@@ -40,9 +40,9 @@ const Game = () => {
     const [unlockedFacts, setUnlockedFacts] = useState<string[]>([]);
 
     const difficultyConfigs = {
-        easy: { pairs: 6, grid: '4x3' },
-        medium: { pairs: 8, grid: '4x4' },
-        hard: { pairs: 10, grid: '5x4' }
+        easy: { pairs: 8, grid: '4x4' },
+        medium: { pairs: 12, grid: '6x4' },
+        hard: { pairs: 18, grid: '6x6' }
     };
 
     useEffect(() => {

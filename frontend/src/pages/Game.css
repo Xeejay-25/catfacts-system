@@ -347,11 +347,11 @@
 }
 
 .cards-grid-medium {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(6, 1fr);
 }
 
 .cards-grid-hard {
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
 }
 
 /* Memory Card */
@@ -500,7 +500,7 @@
     }
 
     .cards-grid-hard {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(5, 1fr);
     }
 }
 
