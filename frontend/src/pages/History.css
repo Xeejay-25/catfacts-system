@@ -16,7 +16,7 @@
     align-items: center;
     gap: 8px;
     padding: 10px 20px;
-    background: none;
+    background: black;
     border: none;
     color: #ecf0f1;
     font-size: 14px;
@@ -211,6 +211,7 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
+    display: inline-block;
 }
 
 .btn-primary {
