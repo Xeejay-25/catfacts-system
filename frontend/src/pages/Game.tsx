@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { gameAPI } from '../services/api';
+import confetti from 'canvas-confetti';
 import './Game.css';
 
 interface Card {
@@ -67,6 +68,40 @@ const Game = () => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
         return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const triggerConfetti = () => {
+        // Confetti burst from center
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+
+        // Additional confetti bursts for extra celebration
+        setTimeout(() => {
+            confetti({
+                particleCount: 50,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 }
+            });
+            confetti({
+                particleCount: 50,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 }
+            });
+        }, 250);
+
+        // Final burst
+        setTimeout(() => {
+            confetti({
+                particleCount: 100,
+                spread: 80,
+                origin: { y: 0.6 }
+            });
+        }, 500);
     };
 
     const saveGameToBackend = async (finalScore: number, pairs: number, gameStatus: 'won' | 'abandoned') => {
@@ -189,6 +224,8 @@ const Game = () => {
                     // Check if game is complete
                     if (newMatchedPairs === difficultyConfigs[difficulty].pairs) {
                         setIsGameActive(false);
+                        // Trigger confetti celebration!
+                        triggerConfetti();
                         // Save game to backend with 'won' status
                         saveGameToBackend(score + 100, newMatchedPairs, 'won');
                     }
