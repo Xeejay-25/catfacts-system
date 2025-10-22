@@ -12,7 +12,7 @@ interface Card {
     isMatched: boolean;
 }
 
-const CAT_EMOJIS = ['🐱', '🐈', '😺', '😸', '😻', '🙀', '😿', '😾', '😼', '😽', '🐈‍⬛', '🐾', '🦁', '🐯', '🐅', '🐆', '🦒', '🦓'];
+const CAT_EMOJIS = ['🐈', '😺', '😸', '😻', '🙀', '😿', '😾', '😼', '😽', '🐈‍⬛', '🐾', '🦁', '🐯', '🐅', '🐆', '🦒', '🦓'];
 
 const Game = () => {
     const navigate = useNavigate();
