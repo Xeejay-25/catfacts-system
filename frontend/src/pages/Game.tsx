@@ -207,8 +207,27 @@ const Game = () => {
         }
     };
 
-    const handleStartGame = () => {
-        initializeGame();
+    const handleStartGame = async () => {
+        if (isGameActive) {
+            // If game is active, reset it and save as abandoned
+            if (currentGameId) {
+                console.log('🔄 Resetting game - saving current game as abandoned...');
+                await saveGameToBackend(score, matchedPairs, 'abandoned');
+            }
+            // Reset to initial state (button shows "Start Game")
+            setIsGameActive(false);
+            setCards([]);
+            setFlippedCards([]);
+            setMoves(0);
+            setMatchedPairs(0);
+            setScore(0);
+            setTime(0);
+            setUnlockedFacts([]);
+            setCurrentGameId(null);
+        } else {
+            // Start a new game
+            initializeGame();
+        }
     };
 
     const handleExitGame = async () => {
