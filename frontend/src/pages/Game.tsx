@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { gameAPI } from '../services/api';
+import { gameAPI, catFactsAPI } from '../services/api';
 import confetti from 'canvas-confetti';
 import './Game.css';
 
@@ -13,17 +13,6 @@ interface Card {
 }
 
 const CAT_EMOJIS = ['🐱', '🐈', '😺', '😸', '😻', '🙀', '😿', '😾', '😼', '😽', '🐈‍⬛', '🐾', '🦁', '🐯', '🐅', '🐆', '🦒', '🦓'];
-
-const CAT_FACTS = [
-    "Cats spend 70% of their lives sleeping, which means a 9-year-old cat has been awake for only three years!",
-    "A group of cats is called a 'clowder' and a group of kittens is called a 'kindle'.",
-    "Cats have over 20 vocalizations, including the purr, meow, chirp, and hiss.",
-    "A cat's nose print is unique, much like a human's fingerprint.",
-    "Cats can rotate their ears 180 degrees and have 32 muscles in each ear.",
-    "The oldest known pet cat existed 9,500 years ago in Cyprus.",
-    "Cats can jump up to six times their length in one leap!",
-    "A cat's purr vibrates at a frequency that promotes healing in bones and tissues."
-];
 
 const Game = () => {
     const navigate = useNavigate();
@@ -38,6 +27,7 @@ const Game = () => {
     const [isGameActive, setIsGameActive] = useState(false);
     const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('easy');
     const [unlockedFacts, setUnlockedFacts] = useState<string[]>([]);
+    const [availableFacts, setAvailableFacts] = useState<string[]>([]);
 
     const difficultyConfigs = {
         easy: { pairs: 8, grid: '4x4' },
@@ -171,6 +161,18 @@ const Game = () => {
         setUnlockedFacts([]);
         setIsGameActive(true);
 
+        // Fetch cat facts from backend API
+        try {
+            console.log('🐱 Fetching cat facts from API for', pairs, 'pairs...');
+            const facts = await catFactsAPI.getGameFacts(pairs);
+            setAvailableFacts(facts);
+            console.log('✅ Fetched', facts.length, 'cat facts');
+        } catch (error) {
+            console.error('❌ Failed to fetch cat facts:', error);
+            // Fallback to empty array if API fails
+            setAvailableFacts([]);
+        }
+
         // Start game in backend - await this!
         if (currentUser?.id) {
             try {
@@ -215,9 +217,11 @@ const Game = () => {
                     setMatchedPairs(newMatchedPairs);
                     setScore(score + 100);
 
-                    // Unlock a new fact
-                    const newFact = CAT_FACTS[matchedPairs % CAT_FACTS.length];
-                    setUnlockedFacts(prev => [...prev, newFact]);
+                    // Unlock a new fact from the fetched facts
+                    if (availableFacts.length > 0) {
+                        const newFact = availableFacts[matchedPairs % availableFacts.length];
+                        setUnlockedFacts(prev => [...prev, newFact]);
+                    }
 
                     setFlippedCards([]);
 
@@ -261,6 +265,7 @@ const Game = () => {
             setTime(0);
             setUnlockedFacts([]);
             setCurrentGameId(null);
+            setAvailableFacts([]);
         } else {
             // Start a new game
             initializeGame();
@@ -284,6 +289,7 @@ const Game = () => {
         setIsGameActive(false);
         setCards([]);
         setCurrentGameId(null);
+        setAvailableFacts([]);
     };
 
     const handleDifficultyChange = async (newDifficulty: 'easy' | 'medium' | 'hard') => {
@@ -296,6 +302,7 @@ const Game = () => {
         setIsGameActive(false);
         setCards([]);
         setCurrentGameId(null);
+        setAvailableFacts([]);
     };
 
     const totalPairs = difficultyConfigs[difficulty].pairs;
